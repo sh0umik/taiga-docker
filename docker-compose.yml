@@ -1,8 +1,13 @@
 postgres:
-    image: postgres
+    image: postgres:9.5.9
+    container_name: taiga_postgres
     environment:
         - "POSTGRES_USER=taiga"
         - "POSTGRES_DB=taiga"
+    ports:
+      - 5432:5432
+    volumes:
+      - /mnt/data/taiga/data:/var/lib/postgresql/data
 
 taigaback:
     image: dougg/taiga-back
@@ -10,13 +15,24 @@ taigaback:
         - postgres:postgres
     ports:
         - "8000:8000"
+    environment:
+        - "EMAIL_USE_TLS=True"
+        - "EMAIL_HOST=smtp.server.com"
+        - "EMAIL_PORT=587"
+        - "EMAIL_HOST_USER=user@email.com"
+        - "EMAIL_HOST_PASSWORD=pass"
+        - "BASE_PROTOCOL=http"
+        - "BASE_DOMAIN=ip-addresss:8000"
+    volumes:
+        - ${PWD}/backend/script/set-host.sh:/usr/src/app/taiga-back/scripts/set-host.sh
+    command: sh /usr/src/app/taiga-back/scripts/set-host.sh
 
 taigafront:
     image: dougg/taiga-front
     links:
         - taigaback:taiga-back
     ports:
-        - "8080:80"
+        - "80:80"
     environment:
         - "BASE_PROTOCOL=http"
         - "BASE_DOMAIN=ip-address:8000"
